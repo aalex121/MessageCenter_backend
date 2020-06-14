@@ -33,7 +33,7 @@ namespace MessageCenter3.Controllers
             }
 
             var now = DateTime.UtcNow;
-            // создаем JWT-токен
+           
             var jwt = new JwtSecurityToken(
                     issuer: AuthOptions.ISSUER,
                     audience: AuthOptions.AUDIENCE,
@@ -62,8 +62,7 @@ namespace MessageCenter3.Controllers
                     ClaimsIdentity.DefaultRoleClaimType);
                 return claimsIdentity;
             }
-
-            // если пользователя не найдено
+            
             return null;
         }
     }

@@ -45,10 +45,7 @@ namespace MessageCenter.Models
         public User Create(User user)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
-            {
-                //var sqlQuery = "INSERT INTO Users (Name, Age) VALUES(@Name, @Age)";
-                //db.Execute(sqlQuery, user);
-                
+            {   
                 var sqlQuery = "INSERT INTO Users (Name, Password, Role) VALUES(@Name, @Password, @Role); SELECT CAST(SCOPE_IDENTITY() as int)";
                 int? userId = db.Query<int>(sqlQuery, user).FirstOrDefault();
                 user.Id = userId.Value;
