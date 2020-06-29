@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[UserGroup]
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY, 
+    [GroupName] NVARCHAR(MAX) NOT NULL
+)

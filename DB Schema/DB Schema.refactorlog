@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="5c6f88ef-5086-4c1a-8227-59ac139e2763" ChangeDateTime="06/25/2020 18:47:20">
+    <Property Name="ElementName" Value="[dbo].[MessageInstant].[RecipientId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[MessageInstant]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="TypeId" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="e4fe25c3-5740-4084-bae6-7cf6fb1ab439" ChangeDateTime="06/25/2020 18:52:57">
+    <Property Name="ElementName" Value="[dbo].[MessageInstant].[DateAndTime]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[MessageInstant]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="CreateDateAndTime" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="7c5de79c-efb8-4274-b4f4-cabb5bb4b526" ChangeDateTime="06/25/2020 19:04:36">
+    <Property Name="ElementName" Value="[dbo].[User].[Role]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[User]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="RoleId" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="7c1a8244-6644-49ba-aa51-029028b954a0" ChangeDateTime="06/28/2020 17:29:08">
+    <Property Name="ElementName" Value="[dbo].[MessageDraft].[SenderId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[MessageDraft]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="MessageId" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="bcd75f72-0083-409a-af34-255f068d5cb8" ChangeDateTime="06/28/2020 17:29:22">
+    <Property Name="ElementName" Value="[dbo].[MessageDraft].[TypeId]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[MessageDraft]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="IsSent" />
+  </Operation>
+</Operations>
