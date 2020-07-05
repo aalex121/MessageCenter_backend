@@ -35,6 +35,7 @@ namespace MessageCenter3
             services.AddControllers();
             services.AddTransient<IUserRepository, UserRepository>(provider => new UserRepository(connectionString));
             services.AddTransient<IMessageRepository, MessageRepository>(provider => new MessageRepository(connectionString));
+            services.AddTransient<IUserGroupsRepository, UserGroupsRepository>(provider => new UserGroupsRepository(connectionString));
 
             services.AddCors();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

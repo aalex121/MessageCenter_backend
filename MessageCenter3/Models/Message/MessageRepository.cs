@@ -98,9 +98,9 @@ namespace MessageCenter3.Models
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 return db.Query<Message>(
-                    "SELECT * FROM Message Msg" +
-                    "JOIN MessageGroupRecipient Mgr" +
-                    "ON Msg.Id = Mgr.MessageId" +
+                    "SELECT * FROM Message Msg " +
+                    "JOIN MessageGroupRecipient Mgr " +
+                    "ON Msg.Id = Mgr.MessageId " +
                     "WHERE Mgr.RecipientId = @groupId", new { groupId }).ToList();
             }
         }
@@ -110,9 +110,9 @@ namespace MessageCenter3.Models
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 return db.Query<Message>(
-                    "SELECT * FROM Message Msg" +
-                    "JOIN MessageUserRecipient Mur" +
-                    "ON Msg.Id = Mur.MessageId" +
+                    "SELECT * FROM Message Msg " +
+                    "JOIN MessageUserRecipient Mur " +
+                    "ON Msg.Id = Mur.MessageId " +
                     "WHERE Mur.RecipientId = @userId", new { userId }).ToList();
             }
         }

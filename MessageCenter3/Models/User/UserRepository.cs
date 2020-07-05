@@ -11,42 +11,59 @@ namespace MessageCenter.Models
 {
     public class UserRepository : IUserRepository
     {
+        public const string UserDbName = "[User]";
         string _connectionString = null;
+
         public UserRepository(string connectionString)
         {
             _connectionString = connectionString;
         }
-        public List<User> GetUsers()
+        public List<UserData> GetAllUsers()
         {   
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                return db.Query<User>("SELECT * FROM Users").ToList();
+                return db.Query<UserData>(string.Format("SELECT * FROM {0}", UserDbName)).ToList();
             }
         }
 
-        public User Get(int id)
+        public UserData GetUserById(int id)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                return db.Query<User>("SELECT * FROM Users WHERE Id = @id", new { id }).FirstOrDefault();
+                string sqlQuery = string.Format("SELECT * FROM {0} WHERE Id = @id", UserDbName);
+                return db.Query<UserData>(sqlQuery, new { id }).FirstOrDefault();
             }
         }
 
-        public User GetUserByNameAndPassword(string name, string password)
+        public UserData GetUserByName(string name)
         {
-            var sqlQuery = "SELECT * FROM Users WHERE Name = @name AND Password = @password";
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                string sqlQuery = string.Format("SELECT * FROM {0} WHERE Name = @name", UserDbName);
+                return db.Query<UserData>(sqlQuery, new { name }).FirstOrDefault();
+            }
+        }
+
+        public UserData GetUserByNameAndPassword(string name, string password)
+        {
+            string sqlQuery = string.Format("SELECT * FROM {0} WHERE Name = @name AND Password = @password",
+                    UserDbName);
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                return db.Query<User>(sqlQuery, new { name, password }).FirstOrDefault();
+                return db.Query<UserData>(sqlQuery, new { name, password }).FirstOrDefault();
             }
         }
 
-        public User Create(User user)
+        public UserData CreateUser(UserData user)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {   
-                var sqlQuery = "INSERT INTO Users (Name, Password, Role) VALUES(@Name, @Password, @Role); SELECT CAST(SCOPE_IDENTITY() as int)";
+                string sqlQuery = string.Format("INSERT INTO {0} " +
+                        "(Name, Password, RoleId) " +
+                        "VALUES(@Name, @Password, @RoleId); " +
+                        "SELECT CAST(SCOPE_IDENTITY() as int)", UserDbName);
+
                 int? userId = db.Query<int>(sqlQuery, user).FirstOrDefault();
                 user.Id = userId.Value;
 
@@ -54,22 +71,25 @@ namespace MessageCenter.Models
             }
         }
 
-        public User Update(User user)
+        public UserData UpdateUserData(UserData user)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                var sqlQuery = "UPDATE Users SET Name = @Name, Password = @Password, Role = @Role WHERE Id = @Id";
+                string sqlQuery = string.Format("UPDATE {0} " +
+                        "SET Name = @Name, Password = @Password, RoleId = @RoleId " +
+                        "WHERE Id = @Id", UserDbName);
+
                 db.Execute(sqlQuery, user);
 
-                return Get(user.Id);
+                return GetUserById(user.Id);
             }
         }
 
-        public void Delete(int id)
+        public void DeleteUser(int id)
         {
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                var sqlQuery = "DELETE FROM Users WHERE Id = @id";
+                string sqlQuery = string.Format("DELETE FROM {0} WHERE Id = @id", UserDbName);
                 db.Execute(sqlQuery, new { id });
             }
         }

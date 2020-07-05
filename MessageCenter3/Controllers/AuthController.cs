@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MessageCenter.Models;
 using MessageCenter3.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,14 @@ namespace MessageCenter3.Controllers
         public AuthController(IUserRepository repository)
         {
             _repository = repository;
+        }
+
+        [Authorize]
+        [Route("getUsername")]
+        [HttpGet]
+        public ActionResult<string> GetUsername()
+        {
+            return string.Format("Your Username: {0}", User.Identity.Name);
         }
 
         [HttpPost("/token")]
@@ -48,18 +57,19 @@ namespace MessageCenter3.Controllers
 
         private ClaimsIdentity GetIdentity(string username, string password)
         {
-            User user = _repository.GetUserByNameAndPassword(username, password);
+            UserData user = _repository.GetUserByNameAndPassword(username, password);
 
             if (user != null)
             {
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimsIdentity.DefaultNameClaimType, user.Name),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role)
+                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.RoleId)
                 };
                 ClaimsIdentity claimsIdentity =
                 new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
                     ClaimsIdentity.DefaultRoleClaimType);
+
                 return claimsIdentity;
             }
             

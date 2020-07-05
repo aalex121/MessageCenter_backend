@@ -20,11 +20,26 @@ namespace MessageCenter3.Controllers
             _repository = repository;
         }
 
-        // GET api/messages
+        // GET api/messages/GetFromUser
+        [Route("[action]/{userId}")]
         [HttpGet]        
-        public ActionResult<string> Get()
+        public ActionResult<List<Message>> GetFromUser(int userId)
         {
-            return "Message Controller here";
+            return _repository.GetMessagesByAuthor(userId);
+        }
+
+        [Route("[action]/{userId}")]
+        [HttpGet]
+        public ActionResult<List<Message>> GetToUser(int userId)
+        {
+            return _repository.GetMessagesToUser(userId);
+        }
+
+        [Route("[action]/{userId}")]
+        [HttpGet]
+        public ActionResult<List<Message>> GetToGroup(int groupId)
+        {
+            return _repository.GetMessagesToGroup(groupId);
         }
 
         // POST api/messages

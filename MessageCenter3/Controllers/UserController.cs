@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MessageCenter.Models;
 using Microsoft.AspNetCore.Authorization;
+using MessageCenter3.Enums;
 
 namespace MessageCenter.Controllers
 {
@@ -21,39 +22,49 @@ namespace MessageCenter.Controllers
 
         // GET api/user
         [HttpGet]
-        [Authorize(Roles = "admin")]
-        public ActionResult<IEnumerable<User>> Get()
+        [Authorize(Roles = "1")]
+        public ActionResult<IEnumerable<UserData>> Get()
         {
-            return _repository.GetUsers();            
+            return _repository.GetAllUsers();            
         }
 
         // GET api/user/5
         [HttpGet("{id}")]
-        public ActionResult<User> Get(int id)
+        public ActionResult<UserData> Get(int id)
         {
-            return _repository.Get(id);
+            return _repository.GetUserById(id);
         }
 
         // POST api/user
         [HttpPost]
-        public User Post(User newUser)
+        public ActionResult<UserData> Post(UserData newUser)
         {
-            return _repository.Create(newUser); 
+            if (_repository.GetUserByName(newUser.Name) != null)
+            {
+                return BadRequest(new { errorText = "Username already exists!" });
+            }
+            
+            return _repository.CreateUser(newUser); 
         }
 
         // PUT api/user/5
         [HttpPut("{id}")]
-        public User Put(int id, User user)
+        public ActionResult<UserData> Put(int id, UserData user)
         {
+            if (_repository.GetUserByName(user.Name) != null)
+            {
+                return BadRequest(new { errorText = "Username already exists!" });
+            }
+
             user.Id = id;
-            return _repository.Update(user);
+            return _repository.UpdateUserData(user);
         }
 
         // DELETE api/user/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
-            _repository.Delete(id);
+            _repository.DeleteUser(id);
         }
     }
 }

@@ -7,11 +7,12 @@ namespace MessageCenter.Models
 {
     public interface IUserRepository
     {
-        User Create(User user);
-        void Delete(int id);
-        User Get(int id);
-        List<User> GetUsers();
-        User Update(User user);
-        User GetUserByNameAndPassword(string name, string password);
+        UserData CreateUser(UserData user);
+        void DeleteUser(int id);
+        UserData GetUserById(int id);
+        UserData GetUserByName(string name);
+        List<UserData> GetAllUsers();
+        UserData UpdateUserData(UserData user);
+        UserData GetUserByNameAndPassword(string name, string password);
     }
 }
