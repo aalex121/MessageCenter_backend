@@ -30,14 +30,14 @@ namespace MessageCenter3.Controllers
 
         [Route("[action]/{userId}")]
         [HttpGet]
-        public ActionResult<List<Message>> GetToUser(int userId)
+        public ActionResult<List<MessageOutputModel>> GetToUser(int userId)
         {
             return _repository.GetMessagesToUser(userId);
         }
 
         [Route("[action]/{userId}")]
         [HttpGet]
-        public ActionResult<List<Message>> GetToGroup(int groupId)
+        public ActionResult<List<MessageOutputModel>> GetToGroup(int groupId)
         {
             return _repository.GetMessagesToGroup(groupId);
         }

@@ -102,7 +102,7 @@ namespace MessageCenter3.Models
 
             return group;
         }
-
+                
         public bool AddUserToGroup(int userId, int groupId)
         {
             if (GetUserGroupById(groupId) == null)
@@ -113,9 +113,9 @@ namespace MessageCenter3.Models
             using (IDbConnection db = new SqlConnection(_connectionString))
             {                
                 UserGroupMemberRecord userRecord = db.Query<UserGroupMemberRecord>(
-                        "SELECT * FROM UserGroupMember " +
-                        "WHERE UserId = @userId " +
-                        "AND GroupId = @groupId", 
+                        @"SELECT * FROM UserGroupMember 
+                        WHERE UserId = @userId 
+                        AND GroupId = @groupId",
                         new { userId, groupId }).FirstOrDefault();
 
                 if (userRecord != null)
@@ -139,9 +139,9 @@ namespace MessageCenter3.Models
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                db.Query("DELETE FROM UserGroupMember " +
-                        "WHERE UserId = @userId " +
-                        "AND GroupId = @groupId",
+                db.Query(@"DELETE FROM UserGroupMember 
+                        WHERE UserId = @userId 
+                        AND GroupId = @groupId",
                         userRecord);
             }
         }

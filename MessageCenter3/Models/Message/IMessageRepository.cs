@@ -10,9 +10,9 @@ namespace MessageCenter3.Models
     {
         List<Message> GetMessagesByAuthor(int userId);
 
-        List<Message> GetMessagesToUser(int userId);
+        List<MessageOutputModel> GetMessagesToUser(int userId);
 
-        List<Message> GetMessagesToGroup(int groupId);
+        List<MessageOutputModel> GetMessagesToGroup(int groupId);
 
         void AddMessage(MessageInputModel message);
     }

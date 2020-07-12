@@ -11,6 +11,10 @@ namespace MessageCenter3.Models
 {
     public class MessageRepository : IMessageRepository
     {
+        private const string UserRecipientTable = "MessageUserRecipient";
+        private const string GroupRecipientTable = "MessageGroupRecipient";
+        private const string UserTableName = "[User]";
+
         string _connectionString = null;
 
         public MessageRepository(string connectionString)
@@ -60,19 +64,7 @@ namespace MessageCenter3.Models
 
         private void AddNewMessageReipient(int messageId, int recipientId, RecipientType recipientType)
         {
-            string insertTable = string.Empty;
-
-            switch (recipientType)
-            {
-                case RecipientType.User:
-                    insertTable = "MessageUserRecipient";
-                    break;
-                case RecipientType.Group:
-                    insertTable = "MessageGroupRecipient";
-                    break;
-                default:
-                    break;
-            }
+            string insertTable = GetRecipientTableName(recipientType);
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
@@ -93,28 +85,58 @@ namespace MessageCenter3.Models
             }
         }
 
-        public List<Message> GetMessagesToGroup(int groupId)
+        public List<MessageOutputModel> GetMessagesToGroup(int groupId)
         {
+            return GetMessagesByRecipient(groupId, RecipientType.Group);
+        }
+
+        public List<MessageOutputModel> GetMessagesToUser(int userId)
+        {
+            return GetMessagesByRecipient(userId, RecipientType.User);
+        }
+
+        private List<MessageOutputModel> GetMessagesByRecipient(int recipientId, RecipientType recipientType)
+        {
+            string recipientTable = GetRecipientTableName(recipientType);
+
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                return db.Query<Message>(
-                    "SELECT * FROM Message Msg " +
-                    "JOIN MessageGroupRecipient Mgr " +
-                    "ON Msg.Id = Mgr.MessageId " +
-                    "WHERE Mgr.RecipientId = @groupId", new { groupId }).ToList();
+                string sqlQuery = string.Format(@"
+                        SELECT Name AS AuthorName, SenderId, TypeId, CreateDateAndTime, Text, MsgId AS Id
+                        FROM {0} UserTable
+                            JOIN (
+	                            SELECT Message.Id AS MsgId, SenderId, TypeId, CreateDateAndTime, RecipientId, Text 
+                                FROM Message 
+	                                JOIN {1} RecipTable
+	                                    ON Message.Id = RecipTable.MessageId 
+	                                    WHERE RecipTable.RecipientId = @recipientId
+	                        ) MessageRecords
+	                        ON UserTable.Id = MessageRecords.SenderId
+                ", UserTableName, recipientTable);
+
+                List<MessageOutputModel> result = db.Query<MessageOutputModel>(sqlQuery, new { recipientId }).ToList();
+
+                return result;
             }
         }
 
-        public List<Message> GetMessagesToUser(int userId)
+        private string GetRecipientTableName(RecipientType recipientType)
         {
-            using (IDbConnection db = new SqlConnection(_connectionString))
+            string recipientTable = string.Empty;
+
+            switch (recipientType)
             {
-                return db.Query<Message>(
-                    "SELECT * FROM Message Msg " +
-                    "JOIN MessageUserRecipient Mur " +
-                    "ON Msg.Id = Mur.MessageId " +
-                    "WHERE Mur.RecipientId = @userId", new { userId }).ToList();
+                case RecipientType.User:
+                    recipientTable = UserRecipientTable;
+                    break;
+                case RecipientType.Group:
+                    recipientTable = GroupRecipientTable;
+                    break;
+                default:
+                    break;
             }
+
+            return recipientTable;
         }
     }
 }
