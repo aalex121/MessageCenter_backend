@@ -8,12 +8,12 @@ namespace MessageCenter3.Models
 {
     public interface IMessageRepository
     {
-        List<Message> GetMessagesByAuthor(int userId);
+        List<MessageOutputModel> GetMessagesFromTo(int senderId, int recipientId, RecipientType recipientType);
 
-        List<MessageOutputModel> GetMessagesToUser(int userId);
+        List<MessageOutputModel> GetMessagesByRecipient(int userId, RecipientType recipientType);
 
-        List<MessageOutputModel> GetMessagesToGroup(int groupId);
+        List<MessageOutputModel> GetDialogue(int collocutor1, int collocutor2);
 
-        void AddMessage(MessageInputModel message);
+        int AddMessage(MessageInputModel message);
     }
 }

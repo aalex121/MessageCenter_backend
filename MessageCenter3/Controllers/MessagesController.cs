@@ -20,33 +20,36 @@ namespace MessageCenter3.Controllers
             _repository = repository;
         }
 
-        // GET api/messages/GetFromUser
-        [Route("[action]/{userId}")]
-        [HttpGet]        
-        public ActionResult<List<Message>> GetFromUser(int userId)
+        [Route("[action]")]
+        [HttpPost]
+        public ActionResult<List<MessageOutputModel>> GetByRecipient(MessageRequestModel request)
         {
-            return _repository.GetMessagesByAuthor(userId);
+            RecipientType messageType = (RecipientType)request.MessageType;
+
+            return _repository.GetMessagesByRecipient(request.RecipientId, messageType);
         }
 
-        [Route("[action]/{userId}")]
-        [HttpGet]
-        public ActionResult<List<MessageOutputModel>> GetToUser(int userId)
+        [Route("[action]")]
+        [HttpPost]
+        public ActionResult<List<MessageOutputModel>> GetFromTo(MessageRequestModel request)
         {
-            return _repository.GetMessagesToUser(userId);
+            RecipientType messageType = (RecipientType)request.MessageType;
+
+            return _repository.GetMessagesFromTo(request.SenderId, request.RecipientId, messageType);
         }
 
-        [Route("[action]/{userId}")]
-        [HttpGet]
-        public ActionResult<List<MessageOutputModel>> GetToGroup(int groupId)
+        [Route("[action]")]
+        [HttpPost]
+        public ActionResult<List<MessageOutputModel>> GetDialogue(MessageRequestModel request)
         {
-            return _repository.GetMessagesToGroup(groupId);
+            return _repository.GetDialogue(request.SenderId, request.RecipientId);
         }
 
         // POST api/messages
         [HttpPost]
-        public void Post(MessageInputModel message)
+        public ActionResult<int> Post(MessageInputModel message)
         {
-            _repository.AddMessage(message);
+            return _repository.AddMessage(message);
         }
 
     }

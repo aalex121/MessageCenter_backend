@@ -22,7 +22,7 @@ namespace MessageCenter3.Models
             _connectionString = connectionString;
         }
 
-        public void AddMessage(MessageInputModel message)
+        public int AddMessage(MessageInputModel message)
         {
             int recipientId = message.RecipientId;
             RecipientType recipientType = (RecipientType)message.RecipientType;
@@ -32,6 +32,8 @@ namespace MessageCenter3.Models
 
             int messageId = AddNewMessage(newMessage, isDraft);
             AddNewMessageReipient(messageId, recipientId, recipientType);
+
+            return messageId;
         }
 
         private int AddNewMessage(Message message, bool isDraft)
@@ -64,79 +66,146 @@ namespace MessageCenter3.Models
 
         private void AddNewMessageReipient(int messageId, int recipientId, RecipientType recipientType)
         {
-            string insertTable = GetRecipientTableName(recipientType);
-
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                string insertQuery = string.Format("INSERT INTO {0} (MessageId, RecipientId) VALUES(@MessageId, @RecipientId)",
-                    insertTable);
+                string sqlQuery = string.Empty;
+
+                switch (recipientType)
+                {
+                    case RecipientType.User:
+                        sqlQuery = @"INSERT INTO MessageUserRecipient (MessageId, RecipientId) VALUES(@MessageId, @RecipientId)";
+                        break;
+                    case RecipientType.Group:
+                        sqlQuery = @"INSERT INTO MessageGroupRecipient (MessageId, RecipientId) VALUES(@MessageId, @RecipientId)";
+                        break;
+                    default:
+                        break;
+                }
 
                 var insertValues = new { MessageId = messageId, RecipientId = recipientId };
 
-                db.Query(insertQuery, insertValues);
+                db.Query(sqlQuery, insertValues);
             }   
         }
 
-        public List<Message> GetMessagesByAuthor(int userId)
+        public List<MessageOutputModel> GetMessagesFromTo(int senderId, int recipientId, RecipientType recipientType)
         {
-            using (IDbConnection db = new SqlConnection(_connectionString))
-            {
-                return db.Query<Message>("SELECT * FROM Message WHERE SenderId = @userId", new { userId }).ToList();
-            }
-        }
-
-        public List<MessageOutputModel> GetMessagesToGroup(int groupId)
-        {
-            return GetMessagesByRecipient(groupId, RecipientType.Group);
-        }
-
-        public List<MessageOutputModel> GetMessagesToUser(int userId)
-        {
-            return GetMessagesByRecipient(userId, RecipientType.User);
-        }
-
-        private List<MessageOutputModel> GetMessagesByRecipient(int recipientId, RecipientType recipientType)
-        {
-            string recipientTable = GetRecipientTableName(recipientType);
-
-            using (IDbConnection db = new SqlConnection(_connectionString))
-            {
-                string sqlQuery = string.Format(@"
-                        SELECT Name AS AuthorName, SenderId, TypeId, CreateDateAndTime, Text, MsgId AS Id
-                        FROM {0} UserTable
-                            JOIN (
-	                            SELECT Message.Id AS MsgId, SenderId, TypeId, CreateDateAndTime, RecipientId, Text 
-                                FROM Message 
-	                                JOIN {1} RecipTable
-	                                    ON Message.Id = RecipTable.MessageId 
-	                                    WHERE RecipTable.RecipientId = @recipientId
-	                        ) MessageRecords
-	                        ON UserTable.Id = MessageRecords.SenderId
-                ", UserTableName, recipientTable);
-
-                List<MessageOutputModel> result = db.Query<MessageOutputModel>(sqlQuery, new { recipientId }).ToList();
-
-                return result;
-            }
-        }
-
-        private string GetRecipientTableName(RecipientType recipientType)
-        {
-            string recipientTable = string.Empty;
+            string sqlQuery = string.Empty;
 
             switch (recipientType)
             {
                 case RecipientType.User:
-                    recipientTable = UserRecipientTable;
+                    sqlQuery = @"
+                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
+                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                            FROM Message 
+	                            JOIN MessageUserRecipient RecipTable
+	                                ON Message.Id = RecipTable.MessageId
+                                JOIN [User]
+                                    ON RecipTable.RecipientId = [User].Id
+                                WHERE Message.SenderId = @senderId
+                                AND RecipTable.RecipientId = @recipientId";
                     break;
                 case RecipientType.Group:
-                    recipientTable = GroupRecipientTable;
+                    sqlQuery = @"
+                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
+                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                            FROM Message 
+	                            JOIN MessageGroupRecipient RecipTable
+	                                ON Message.Id = RecipTable.MessageId
+                                JOIN [User]
+                                    ON RecipTable.RecipientId = [User].Id
+                                WHERE Message.SenderId = @senderId
+                                AND RecipTable.RecipientId = @recipientId";
                     break;
                 default:
                     break;
             }
 
-            return recipientTable;
+            if (string.IsNullOrWhiteSpace(sqlQuery))
+            {
+                throw new ArgumentException("Invalid Recipient Type!");
+            }
+
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
+                        new { senderId, recipientId }).ToList();
+
+                return output;
+            }
+        }
+
+        public List<MessageOutputModel> GetMessagesByRecipient(int recipientId, RecipientType recipientType)
+        {
+            string sqlQuery = string.Empty;
+
+            switch (recipientType)
+            {
+                case RecipientType.User:
+                    sqlQuery = @"
+                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
+                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                            FROM Message 
+	                            JOIN MessageUserRecipient RecipTable
+	                                ON Message.Id = RecipTable.MessageId
+                                JOIN [User]
+                                    ON Message.SenderId = [User].Id
+                                WHERE RecipTable.RecipientId = @recipientId";
+                    break;
+                case RecipientType.Group:
+                    sqlQuery = @"
+                        [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
+                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                            FROM Message 
+	                            JOIN MessageGroupRecipient RecipTable
+	                                ON Message.Id = RecipTable.MessageId
+                                JOIN [User]
+                                    ON Message.SenderId = [User].Id
+                                WHERE RecipTable.RecipientId = @recipientId";
+                    break;
+                default:
+                    break;
+            }
+
+            if (string.IsNullOrWhiteSpace(sqlQuery))
+            {
+                throw new ArgumentException("Invalid Recipient Type!");
+            }
+
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
+                        new { recipientId }).ToList();
+
+                return output;
+            }
+        }
+
+        public List<MessageOutputModel> GetDialogue(int collocutor1, int collocutor2)
+        {
+            string sqlQuery = @"
+                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
+                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                            FROM Message 
+	                            JOIN MessageUserRecipient RecipTable
+	                                ON Message.Id = RecipTable.MessageId
+                                JOIN [User]
+                                    ON RecipTable.RecipientId = [User].Id                                
+                                WHERE RecipTable.RecipientId IN (@collocutor1, @collocutor2)";
+
+            if (string.IsNullOrWhiteSpace(sqlQuery))
+            {
+                throw new ArgumentException("Invalid Recipient Type!");
+            }
+
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
+                        new { collocutor1, collocutor2 }).ToList();
+
+                return output;
+            }
         }
     }
 }
