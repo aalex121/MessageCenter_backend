@@ -42,22 +42,43 @@ namespace MessageCenter3.Controllers
             return _repository.GetUserGroupsByUserId(userId);
         }
 
+        [Route("[action]/{userId}")]
+        [HttpGet]
+        public ActionResult<List<UserGroup>> GetAvailableUserGroups(int userId)
+        {
+            return _repository.GetAvailableUserGroups(userId);
+        }
+
         // POST api/userGroups
         [HttpPost]
         public ActionResult<UserGroup> AddGroup(UserGroupInputModel newGroup)
         {
             UserGroup group = _repository.AddUserGroup(newGroup);
-            _repository.AddUserToGroup(group.Id, newGroup.CreatorId);
+
+            JoinGroupRequestModel joinData = new JoinGroupRequestModel
+            {
+                GroupId = group.Id,
+                UserId = newGroup.CreatorId
+            };
+
+            _repository.AddUserToGroup(joinData);
 
             return group;
         }
 
-        // POST api/userGroups/AddUserToGroup/1/1
-        [Route("[action]/{userId}/{groupId}")]
+        // POST api/userGroups/AddUserToGroup
+        [Route("[action]")]
         [HttpPost]
-        public ActionResult<bool> AddUserToGroup(int userId, int groupId)
+        public ActionResult<bool> JoinGroup(JoinGroupRequestModel request)
         {
-            return _repository.AddUserToGroup(userId, groupId);
+            if (_repository.GetUserGroupById(request.GroupId) == null)
+            {
+                return BadRequest("The User Group does not exist!");
+            }
+
+            _repository.AddUserToGroup(request);
+
+            return true;
         }
 
         [HttpPut]
@@ -76,9 +97,9 @@ namespace MessageCenter3.Controllers
         // DELETE api/userGroups/ExcludeUserFromGroup/1/1
         [Route("[action]/{userId}/{groupId}")]
         [HttpDelete]
-        public void ExcludeUserFromGroup(int userId, int groupId)
+        public void ExcludeUserFromGroup(JoinGroupRequestModel request)
         {
-            _repository.ExcludeUserFromGroup(userId, groupId);
+            _repository.ExcludeUserFromGroup(request);
         }
 
 
