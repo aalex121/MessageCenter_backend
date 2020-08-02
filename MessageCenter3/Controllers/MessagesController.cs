@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MessageCenter3.DAL.Repositories;
 using MessageCenter3.Enums;
 using MessageCenter3.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MessageCenter3.Controllers
@@ -22,27 +20,39 @@ namespace MessageCenter3.Controllers
 
         [Route("[action]")]
         [HttpPost]
-        public ActionResult<List<MessageOutputModel>> GetByRecipient(MessageRequestModel request)
+        public ActionResult<List<MessageOutputModel>> GetByRecipient(UserMessageRequestModel request)
         {
             RecipientType messageType = (RecipientType)request.MessageType;
 
-            return _repository.GetMessagesByRecipient(request.RecipientId, messageType);
+            return _repository.GetMessagesByRecipient(request.CollocutorId, messageType);
+        }        
+
+        [Route("[action]")]
+        [HttpPost]
+        public ActionResult<List<MessageOutputModel>> GetUserDialogue(UserMessageRequestModel request)
+        {
+            bool isMessageTypeValid = Enum.IsDefined(typeof(MessageTypes), request.MessageType);
+
+            if (!isMessageTypeValid)
+            {
+                return BadRequest("Invalid Message Type!");
+            }
+            
+            return _repository.GetDialogue(request);
         }
 
         [Route("[action]")]
         [HttpPost]
-        public ActionResult<List<MessageOutputModel>> GetFromTo(MessageRequestModel request)
+        public ActionResult<List<MessageOutputModel>> GetGroupMessages(GroupMessageRequestModel request)
         {
-            RecipientType messageType = (RecipientType)request.MessageType;
+            bool isMessageTypeValid = Enum.IsDefined(typeof(MessageTypes), request.MessageType);
 
-            return _repository.GetMessagesFromTo(request.SenderId, request.RecipientId, messageType);
-        }
+            if (!isMessageTypeValid)
+            {
+                return BadRequest("Invalid Message Type!");
+            }
 
-        [Route("[action]")]
-        [HttpPost]
-        public ActionResult<List<MessageOutputModel>> GetDialogue(MessageRequestModel request)
-        {
-            return _repository.GetDialogue(request.SenderId, request.RecipientId);
+            return _repository.GetGroupMessages(request);
         }
 
         // POST api/messages

@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using System.Data;
 using MessageCenter3.Enums;
+using MessageCenter3.Models;
 
-namespace MessageCenter3.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public class MessageRepository : IMessageRepository
     {
-        private const string UserRecipientTable = "MessageUserRecipient";
-        private const string GroupRecipientTable = "MessageGroupRecipient";
-        private const string UserTableName = "[User]";
-
         string _connectionString = null;
 
         public MessageRepository(string connectionString)
@@ -88,49 +84,48 @@ namespace MessageCenter3.Models
             }   
         }
 
-        public List<MessageOutputModel> GetMessagesFromTo(int senderId, int recipientId, RecipientType recipientType)
+        public List<MessageOutputModel> GetDialogue(UserMessageRequestModel request)
         {
-            string sqlQuery = string.Empty;
-
-            switch (recipientType)
-            {
-                case RecipientType.User:
-                    sqlQuery = @"
-                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
-                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+            string sqlQuery = sqlQuery = @"
+                        SELECT RecipTable.RecipientId, [User].Name AS SenderName, 
+                                SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
                             FROM Message 
 	                            JOIN MessageUserRecipient RecipTable
 	                                ON Message.Id = RecipTable.MessageId
                                 JOIN [User]
-                                    ON RecipTable.RecipientId = [User].Id
-                                WHERE Message.SenderId = @senderId
-                                AND RecipTable.RecipientId = @recipientId";
-                    break;
-                case RecipientType.Group:
-                    sqlQuery = @"
-                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
-                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                                    ON Message.SenderId = [User].Id
+                                WHERE Message.SenderId IN (@CurrentUserId, @CollocutorId)
+                                AND RecipTable.RecipientId IN (@CurrentUserId, @CollocutorId)
+                                AND Message.TypeId = @MessageType
+                        ORDER BY Message.CreateDateAndTime
+                        OFFSET @Offset Rows";            
+
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery, request).ToList();
+
+                return output;
+            }
+        }
+
+        public List<MessageOutputModel> GetGroupMessages(GroupMessageRequestModel request)
+        {
+            string sqlQuery = @"
+                        SELECT RecipTable.RecipientId, [User].Name AS SenderName, 
+                                SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
                             FROM Message 
 	                            JOIN MessageGroupRecipient RecipTable
 	                                ON Message.Id = RecipTable.MessageId
                                 JOIN [User]
                                     ON RecipTable.RecipientId = [User].Id
-                                WHERE Message.SenderId = @senderId
-                                AND RecipTable.RecipientId = @recipientId";
-                    break;
-                default:
-                    break;
-            }
-
-            if (string.IsNullOrWhiteSpace(sqlQuery))
-            {
-                throw new ArgumentException("Invalid Recipient Type!");
-            }
+                                WHERE RecipTable.RecipientId = @GroupId
+                                AND Message.TypeId = @MessageType
+                        ORDER BY Message.CreateDateAndTime
+                        OFFSET @Offset Rows";
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
-                        new { senderId, recipientId }).ToList();
+                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery, request).ToList();
 
                 return output;
             }
@@ -144,65 +139,34 @@ namespace MessageCenter3.Models
             {
                 case RecipientType.User:
                     sqlQuery = @"
-                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
-                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                        SELECT RecipTable.RecipientId, [User].Name AS SenderName, 
+                                SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id
                             FROM Message 
 	                            JOIN MessageUserRecipient RecipTable
 	                                ON Message.Id = RecipTable.MessageId
                                 JOIN [User]
-                                    ON Message.SenderId = [User].Id
+                                    ON RecipTable.RecipientId = [User].Id
                                 WHERE RecipTable.RecipientId = @recipientId";
                     break;
                 case RecipientType.Group:
                     sqlQuery = @"
-                        [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
-                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
+                        SELECT RecipTable.RecipientId, [User].Name AS SenderName, 
+                                SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
                             FROM Message 
 	                            JOIN MessageGroupRecipient RecipTable
 	                                ON Message.Id = RecipTable.MessageId
                                 JOIN [User]
-                                    ON Message.SenderId = [User].Id
+                                    ON RecipTable.RecipientId = [User].Id
                                 WHERE RecipTable.RecipientId = @recipientId";
                     break;
                 default:
                     break;
             }
 
-            if (string.IsNullOrWhiteSpace(sqlQuery))
-            {
-                throw new ArgumentException("Invalid Recipient Type!");
-            }
-
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
                         new { recipientId }).ToList();
-
-                return output;
-            }
-        }
-
-        public List<MessageOutputModel> GetDialogue(int collocutor1, int collocutor2)
-        {
-            string sqlQuery = @"
-                        SELECT [User].Id AS CollocutorId, [User].Name AS CollocutorName, 
-                            SenderId, TypeId, CreateDateAndTime, Text, Message.Id AS Id 
-                            FROM Message 
-	                            JOIN MessageUserRecipient RecipTable
-	                                ON Message.Id = RecipTable.MessageId
-                                JOIN [User]
-                                    ON RecipTable.RecipientId = [User].Id                                
-                                WHERE RecipTable.RecipientId IN (@collocutor1, @collocutor2)";
-
-            if (string.IsNullOrWhiteSpace(sqlQuery))
-            {
-                throw new ArgumentException("Invalid Recipient Type!");
-            }
-
-            using (IDbConnection db = new SqlConnection(_connectionString))
-            {
-                List<MessageOutputModel> output = db.Query<MessageOutputModel>(sqlQuery,
-                        new { collocutor1, collocutor2 }).ToList();
 
                 return output;
             }

@@ -7,6 +7,6 @@ namespace MessageCenter3.Models
 {
     public class UserGroupInputModel : UserGroup
     {
-        public int CreatorId { get; set; }
+        public int CreatorId { get; set; }        
     }
 }

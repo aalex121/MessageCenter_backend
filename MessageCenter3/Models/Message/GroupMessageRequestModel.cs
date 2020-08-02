@@ -5,10 +5,9 @@ using System.Threading.Tasks;
 
 namespace MessageCenter3.Models
 {
-    public class MessageRequestModel
-    {
-        public int SenderId { get; set; }
-        public int RecipientId { get; set; }
+    public class GroupMessageRequestModel
+    {   
+        public int GroupId { get; set; }
         public int MessageType { get; set; }
     }
 }

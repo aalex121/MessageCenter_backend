@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using MessageCenter3.DAL.Repositories;
 using MessageCenter3.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 namespace MessageCenter3.Controllers
 {
@@ -13,10 +11,12 @@ namespace MessageCenter3.Controllers
     public class UserGroupsController : ControllerBase
     {
         private readonly IUserGroupsRepository _repository;
+        private readonly IUserGroupMapper _mapper;
 
-        public UserGroupsController(IUserGroupsRepository repository)
+        public UserGroupsController(IUserGroupsRepository repository, IUserGroupMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         // GET api/userGroups/1
@@ -42,22 +42,43 @@ namespace MessageCenter3.Controllers
             return _repository.GetUserGroupsByUserId(userId);
         }
 
+        [Route("[action]/{userId}")]
+        [HttpGet]
+        public ActionResult<List<UserGroup>> GetAvailableUserGroups(int userId)
+        {
+            return _repository.GetAvailableUserGroups(userId);
+        }
+
         // POST api/userGroups
         [HttpPost]
         public ActionResult<UserGroup> AddGroup(UserGroupInputModel newGroup)
         {
-            UserGroup group = _repository.AddUserGroup(newGroup);
-            _repository.AddUserToGroup(group.Id, newGroup.CreatorId);
+            newGroup.Id = _repository.AddUserGroup(newGroup).Id;
+            Mapper mapper = new Mapper(_mapper.GroupInputToJoinConfig);
 
-            return group;
+            JoinGroupRequestModel joinData = mapper.Map<UserGroupInputModel, JoinGroupRequestModel>(newGroup);
+            _repository.AddUserToGroup(joinData);
+
+            mapper = new Mapper(_mapper.GroupInputToGroupConfig);
+
+            return mapper.Map<UserGroupInputModel, UserGroup>(newGroup);
         }
 
-        // POST api/userGroups/AddUserToGroup/1/1
-        [Route("[action]/{userId}/{groupId}")]
+        // POST api/userGroups/AddUserToGroup
+        [Route("[action]")]
         [HttpPost]
-        public ActionResult<bool> AddUserToGroup(int userId, int groupId)
+        public ActionResult<bool> JoinGroup(JoinGroupRequestModel request)
         {
-            return _repository.AddUserToGroup(userId, groupId);
+            if (_repository.GetUserGroupById(request.GroupId) == null)
+            {
+                return BadRequest("The User Group does not exist!");
+            }
+
+            request.IsGroupAdmin = false;
+
+            _repository.AddUserToGroup(request);
+
+            return true;
         }
 
         [HttpPut]
@@ -76,9 +97,9 @@ namespace MessageCenter3.Controllers
         // DELETE api/userGroups/ExcludeUserFromGroup/1/1
         [Route("[action]/{userId}/{groupId}")]
         [HttpDelete]
-        public void ExcludeUserFromGroup(int userId, int groupId)
+        public void ExcludeUserFromGroup(JoinGroupRequestModel request)
         {
-            _repository.ExcludeUserFromGroup(userId, groupId);
+            _repository.ExcludeUserFromGroup(request);
         }
 
 

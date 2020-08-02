@@ -1,12 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dapper;
-using System.Threading.Tasks;
 using System.Data;
+using MessageCenter3.Models;
 
-namespace MessageCenter3.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public class UserGroupsRepository : IUserGroupsRepository
     {
@@ -24,9 +23,9 @@ namespace MessageCenter3.Models
                 UserGroup newGroupData = newGroup;
 
                 string groupInsertQuery =
-                        "INSERT INTO UserGroup (GroupName) " +
-                        "VALUES(@GroupName);" +
-                        "SELECT CAST(SCOPE_IDENTITY() as int)";
+                        @"INSERT INTO UserGroup (GroupName) 
+                            VALUES(@GroupName);
+                        SELECT CAST(SCOPE_IDENTITY() as int)";
 
                 newGroup.Id = db.Query<int>(groupInsertQuery, newGroupData).First();
 
@@ -79,10 +78,25 @@ namespace MessageCenter3.Models
         public List<UserGroup> GetUserGroupsByUserId(int userId)
         {
             string sqlQuery =
-                    "SELECT * FROM UserGroup group " +
-                    "JOIN UserGroupMember member " +
-                    "ON group.Id = member.GroupId " +
-                    "WHERE member.UserId = @userId ";
+                    @"SELECT * FROM UserGroup 
+                        JOIN UserGroupMember member 
+                            ON UserGroup.Id = member.GroupId 
+                        WHERE member.UserId = @userId";
+
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                return db.Query<UserGroup>(sqlQuery, new { userId }).ToList();
+            }
+        }
+
+        public List<UserGroup> GetAvailableUserGroups(int userId)
+        {
+            string sqlQuery =
+                    @"SELECT UserGroup.Id AS Id, GroupName FROM UserGroup 
+                        JOIN UserGroupMember member 
+                            ON UserGroup.Id = member.GroupId 
+                        WHERE member.UserId <> @userId
+                        GROUP BY UserGroup.Id, GroupName";
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
@@ -96,53 +110,49 @@ namespace MessageCenter3.Models
             {
                 using (IDbConnection db = new SqlConnection(_connectionString))
                 {
-                    db.Query("UPDATE UserGroup SET GroupName = @GroupName WHERE Id = @Id", group);
+                    db.Query(
+                            @"UPDATE UserGroup 
+                                SET GroupName = @GroupName 
+                                WHERE Id = @Id", group);
                 }
             }
 
             return group;
         }
                 
-        public bool AddUserToGroup(int userId, int groupId)
+        public void AddUserToGroup(JoinGroupRequestModel request)
         {
-            if (GetUserGroupById(groupId) == null)
-            {
-                return false;
-            }
-
             using (IDbConnection db = new SqlConnection(_connectionString))
-            {                
-                UserGroupMemberRecord userRecord = db.Query<UserGroupMemberRecord>(
-                        @"SELECT * FROM UserGroupMember 
-                        WHERE UserId = @userId 
-                        AND GroupId = @groupId",
-                        new { userId, groupId }).FirstOrDefault();
-
-                if (userRecord != null)
-                {
-                    return false;
-                }
-
-                userRecord.UserId = userId;
-                userRecord.GroupId = groupId;
-
-                db.Query("INSERT INTO UserGroupMember (UserId, GroupId) " +
-                        "VALUES(@userId, @groupId)", userRecord);
-            }
-
-            return true;
+            {
+                db.Query(
+                        @"INSERT INTO UserGroupMember (UserId, GroupId, IsGroupAdmin)
+                            VALUES(@UserId, @GroupId, @IsGroupAdmin)",
+                        request);
+            }           
         }
 
-        public void ExcludeUserFromGroup(int userId, int groupId)
+        public void ExcludeUserFromGroup(JoinGroupRequestModel request)
         {
-            UserGroupMemberRecord userRecord = new UserGroupMemberRecord(){ UserId = userId, GroupId = groupId };
-
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
-                db.Query(@"DELETE FROM UserGroupMember 
-                        WHERE UserId = @userId 
-                        AND GroupId = @groupId",
-                        userRecord);
+                db.Query(
+                        @"DELETE FROM UserGroupMember 
+                            WHERE UserId = @UserId 
+                            AND GroupId = @GroupId",
+                        request);
+            }
+        }
+
+        private IEnumerable<int> GetGroupAdmins(int groupId)
+        {
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                return db.Query<int>(
+                    @"SELECT UserId FROM UserGroupMember
+                    WHERE GroupId = @groupId
+                        AND IsGroupAdmin = 1",
+                    new { groupId }
+                    );
             }
         }
     }

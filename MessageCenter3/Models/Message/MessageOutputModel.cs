@@ -7,7 +7,7 @@ namespace MessageCenter3.Models
 {
     public class MessageOutputModel : Message
     {
-        public int CollocutorId { get; set; }
-        public string CollocutorName { get; set; }
+        public int RecipientId { get; set; }
+        public string SenderName { get; set; }
     }
 }
