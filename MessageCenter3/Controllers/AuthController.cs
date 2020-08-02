@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MessageCenter.Models;
 using MessageCenter3.Authentication;
+using MessageCenter3.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

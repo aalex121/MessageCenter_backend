@@ -1,9 +1,7 @@
-﻿using System;
+﻿using MessageCenter.Models;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace MessageCenter.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public interface IUserRepository
     {

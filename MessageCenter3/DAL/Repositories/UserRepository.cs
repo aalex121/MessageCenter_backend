@@ -1,13 +1,11 @@
 ﻿using Dapper;
+using MessageCenter.Models;
 using Microsoft.Data.SqlClient;
-using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
-using System.Threading.Tasks;
 
-namespace MessageCenter.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public class UserRepository : IUserRepository
     {

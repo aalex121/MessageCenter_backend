@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using MessageCenter3.DAL.Repositories;
 using MessageCenter3.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 namespace MessageCenter3.Controllers
 {
@@ -13,10 +11,12 @@ namespace MessageCenter3.Controllers
     public class UserGroupsController : ControllerBase
     {
         private readonly IUserGroupsRepository _repository;
+        private readonly IUserGroupMapper _mapper;
 
-        public UserGroupsController(IUserGroupsRepository repository)
+        public UserGroupsController(IUserGroupsRepository repository, IUserGroupMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         // GET api/userGroups/1
@@ -53,17 +53,15 @@ namespace MessageCenter3.Controllers
         [HttpPost]
         public ActionResult<UserGroup> AddGroup(UserGroupInputModel newGroup)
         {
-            UserGroup group = _repository.AddUserGroup(newGroup);
+            newGroup.Id = _repository.AddUserGroup(newGroup).Id;
+            Mapper mapper = new Mapper(_mapper.GroupInputToJoinConfig);
 
-            JoinGroupRequestModel joinData = new JoinGroupRequestModel
-            {
-                GroupId = group.Id,
-                UserId = newGroup.CreatorId
-            };
-
+            JoinGroupRequestModel joinData = mapper.Map<UserGroupInputModel, JoinGroupRequestModel>(newGroup);
             _repository.AddUserToGroup(joinData);
 
-            return group;
+            mapper = new Mapper(_mapper.GroupInputToGroupConfig);
+
+            return mapper.Map<UserGroupInputModel, UserGroup>(newGroup);
         }
 
         // POST api/userGroups/AddUserToGroup
@@ -75,6 +73,8 @@ namespace MessageCenter3.Controllers
             {
                 return BadRequest("The User Group does not exist!");
             }
+
+            request.IsGroupAdmin = false;
 
             _repository.AddUserToGroup(request);
 

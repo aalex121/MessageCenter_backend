@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace MessageCenter3.Enums
 {
-    public enum UserRoles
+    public enum GroupMemberRoles
     {
-        User = 0,
+        RegularMemeber = 0,
         Admin = 1
     }
 }

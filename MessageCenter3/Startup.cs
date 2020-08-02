@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MessageCenter.Models;
 using MessageCenter3.Authentication;
+using MessageCenter3.DAL.Repositories;
 using MessageCenter3.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -36,6 +37,7 @@ namespace MessageCenter3
             services.AddTransient<IUserRepository, UserRepository>(provider => new UserRepository(connectionString));
             services.AddTransient<IMessageRepository, MessageRepository>(provider => new MessageRepository(connectionString));
             services.AddTransient<IUserGroupsRepository, UserGroupsRepository>(provider => new UserGroupsRepository(connectionString));
+            services.AddTransient<IUserGroupMapper, UserGroupMapper>(provider => new UserGroupMapper());
 
             services.AddCors();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

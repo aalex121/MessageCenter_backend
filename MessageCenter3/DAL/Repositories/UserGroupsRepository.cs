@@ -1,12 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dapper;
-using System.Threading.Tasks;
 using System.Data;
+using MessageCenter3.Models;
 
-namespace MessageCenter3.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public class UserGroupsRepository : IUserGroupsRepository
     {
@@ -79,9 +78,9 @@ namespace MessageCenter3.Models
         public List<UserGroup> GetUserGroupsByUserId(int userId)
         {
             string sqlQuery =
-                    @"SELECT * FROM UserGroup group 
+                    @"SELECT * FROM UserGroup 
                         JOIN UserGroupMember member 
-                            ON group.Id = member.GroupId 
+                            ON UserGroup.Id = member.GroupId 
                         WHERE member.UserId = @userId";
 
             using (IDbConnection db = new SqlConnection(_connectionString))
@@ -93,11 +92,11 @@ namespace MessageCenter3.Models
         public List<UserGroup> GetAvailableUserGroups(int userId)
         {
             string sqlQuery =
-                    @"SELECT * FROM UserGroup group 
+                    @"SELECT UserGroup.Id AS Id, GroupName FROM UserGroup 
                         JOIN UserGroupMember member 
-                            ON group.Id = member.GroupId 
+                            ON UserGroup.Id = member.GroupId 
                         WHERE member.UserId <> @userId
-                        GROUP BY UserGroup.Id";
+                        GROUP BY UserGroup.Id, GroupName";
 
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
@@ -126,8 +125,8 @@ namespace MessageCenter3.Models
             using (IDbConnection db = new SqlConnection(_connectionString))
             {
                 db.Query(
-                        @"INSERT INTO UserGroupMember (UserId, GroupId)
-                            VALUES(@UserId, @GroupId)",
+                        @"INSERT INTO UserGroupMember (UserId, GroupId, IsGroupAdmin)
+                            VALUES(@UserId, @GroupId, @IsGroupAdmin)",
                         request);
             }           
         }
@@ -141,6 +140,19 @@ namespace MessageCenter3.Models
                             WHERE UserId = @UserId 
                             AND GroupId = @GroupId",
                         request);
+            }
+        }
+
+        private IEnumerable<int> GetGroupAdmins(int groupId)
+        {
+            using (IDbConnection db = new SqlConnection(_connectionString))
+            {
+                return db.Query<int>(
+                    @"SELECT UserId FROM UserGroupMember
+                    WHERE GroupId = @groupId
+                        AND IsGroupAdmin = 1",
+                    new { groupId }
+                    );
             }
         }
     }

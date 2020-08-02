@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using MessageCenter3.Enums;
+using MessageCenter3.Models;
 
-namespace MessageCenter3.Models
+namespace MessageCenter3.DAL.Repositories
 {
     public interface IMessageRepository
     {

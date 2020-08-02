@@ -10,5 +10,6 @@ namespace MessageCenter3.Models
     {
         public int UserId { get; set;}
         public int GroupId { get; set; }
+        public bool IsGroupAdmin { get; set; }
     }
 }
