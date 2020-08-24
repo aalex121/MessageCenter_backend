@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using MessageCenter.Models;
+using MC.API.Models;
+using MC.DAL.DataModels.Users;
 using MessageCenter3.Authentication;
 using MessageCenter3.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -34,13 +32,16 @@ namespace MessageCenter3.Controllers
         }
 
         [HttpPost("/token")]
-        public ActionResult<AuthToken> Token(AuthRequest request)
+        public ActionResult<AuthResponse> Token(AuthRequest request)
         {
-            var identity = GetIdentity(request.Name, request.Password);
-            if (identity == null)
+            UserData user = _repository.GetUserByNameAndPassword(request.Name, request.Password);
+
+            if (user == null)
             {
                 return BadRequest(new { errorText = "Invalid username or password." });
             }
+
+            ClaimsIdentity identity = GetIdentity(user);            
 
             var now = DateTime.UtcNow;
            
@@ -53,28 +54,21 @@ namespace MessageCenter3.Controllers
                     signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-            return new AuthToken { AccessToken = encodedJwt, UserName = identity.Name };
+            return new AuthResponse { AccessToken = encodedJwt, UserName = identity.Name, UserId = user.Id };
         }
 
-        private ClaimsIdentity GetIdentity(string username, string password)
-        {
-            UserData user = _repository.GetUserByNameAndPassword(username, password);
-
-            if (user != null)
+        private ClaimsIdentity GetIdentity(UserData user)
+        { 
+            var claims = new List<Claim>
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimsIdentity.DefaultNameClaimType, user.Name),
-                    new Claim(ClaimsIdentity.DefaultRoleClaimType, user.RoleId)
-                };
-                ClaimsIdentity claimsIdentity =
-                new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
-                    ClaimsIdentity.DefaultRoleClaimType);
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.Name),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, user.RoleId)                    
+            };
+            ClaimsIdentity claimsIdentity =
+            new ClaimsIdentity(claims, "Token", ClaimsIdentity.DefaultNameClaimType,
+                ClaimsIdentity.DefaultRoleClaimType);
 
-                return claimsIdentity;
-            }
-            
-            return null;
+            return claimsIdentity;
         }
     }
 }

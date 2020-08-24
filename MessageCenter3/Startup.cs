@@ -1,20 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MessageCenter.Models;
 using MessageCenter3.Authentication;
-using MessageCenter3.DAL.Repositories;
-using MessageCenter3.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MessageCenter3
@@ -34,10 +24,7 @@ namespace MessageCenter3
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddTransient<IUserRepository, UserRepository>(provider => new UserRepository(connectionString));
-            services.AddTransient<IMessageRepository, MessageRepository>(provider => new MessageRepository(connectionString));
-            services.AddTransient<IUserGroupsRepository, UserGroupsRepository>(provider => new UserGroupsRepository(connectionString));
-            services.AddTransient<IUserGroupMapper, UserGroupMapper>(provider => new UserGroupMapper());
+            MC.DI.Initialize.DALInitializer.InitRepositories(services);
 
             services.AddCors();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using MessageCenter3.DAL.Repositories;
-using MessageCenter3.Models;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using MC.DAL.Entities;
+using MC.DAL.Mappers;
+using MC.DAL.DataModels.UserGroups;
+using MC.DAL.DataModels.Users;
 
 namespace MessageCenter3.Controllers
 {
@@ -49,6 +52,20 @@ namespace MessageCenter3.Controllers
             return _repository.GetAvailableUserGroups(userId);
         }
 
+        [Route("[action]/{groupId}")]
+        [HttpGet]
+        public ActionResult<List<UserData>> GetGroupMembers(int groupId)
+        {   
+            return _repository.GetGroupMemebers(groupId);
+        }
+
+        [Route("[action]/{groupId}")]
+        [HttpGet]
+        public ActionResult<List<UserData>> GetGroupAdmins(int groupId)
+        {
+            return _repository.GetGroupAdmins(groupId);
+        }
+
         // POST api/userGroups
         [HttpPost]
         public ActionResult<UserGroup> AddGroup(UserGroupInputModel newGroup)
@@ -67,18 +84,11 @@ namespace MessageCenter3.Controllers
         // POST api/userGroups/AddUserToGroup
         [Route("[action]")]
         [HttpPost]
-        public ActionResult<bool> JoinGroup(JoinGroupRequestModel request)
+        public ActionResult<JoinAttemptResults> JoinGroup(JoinGroupRequestModel request)
         {
-            if (_repository.GetUserGroupById(request.GroupId) == null)
-            {
-                return BadRequest("The User Group does not exist!");
-            }
-
             request.IsGroupAdmin = false;
 
-            _repository.AddUserToGroup(request);
-
-            return true;
+            return _repository.AddUserToGroup(request);
         }
 
         [HttpPut]

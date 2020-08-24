@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using MC.DAL.DataModels.Messages;
+using MC.DAL.Enums;
 using MessageCenter3.DAL.Repositories;
-using MessageCenter3.Enums;
-using MessageCenter3.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MessageCenter3.Controllers

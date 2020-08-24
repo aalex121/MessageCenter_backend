@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using MessageCenter.Models;
 using Microsoft.AspNetCore.Authorization;
 using MessageCenter3.DAL.Repositories;
+using MC.DAL.DataModels.Users;
 
 namespace MessageCenter.Controllers
 {
